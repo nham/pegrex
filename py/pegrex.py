@@ -1,8 +1,10 @@
+def ops():
+    return ['|', '.', '?', '+', '*']
+
 def re2post(s):
     operator_stack = []
     operand_stack = []
 
-    ops = ['|', '?', '+', '*']
 
     peektop = lambda stack: stack[len(stack) - 1]
 
@@ -20,7 +22,7 @@ def re2post(s):
     # so we need to insert concatenation operators to use the shunt-yard algorithm
 
     for c in s:
-        if c not in ops:
+        if c not in ops():
             # as long as we use unary ops, the stacks are the same size
             # using the first binary op increases size difference by 1,
             # but subsequent binary ops merely preserve the difference of 1
@@ -47,6 +49,36 @@ def re2post(s):
     apply_all()
 
     return operand_stack.pop()
+
+
+# from a postfix regular expression, compile an NFA
+# maintains a stack of PartialNFAs
+def compile_NFA(s):
+    stack = []
+
+    for c in s:
+        if c not in ops():
+            stack.append(singleton(c))
+        else:
+            if c == '|':
+                pop2 = stack.pop()
+                pop1 = stack.pop()
+                stack.append(alternate(pop1, pop2))
+            elif c == '.':
+                pop2 = stack.pop()
+                pop1 = stack.pop()
+                stack.append(concatenate(pop1, pop2))
+            elif c == '?':
+                stack.append(optional(stack.pop()))
+            elif c == '*':
+                stack.append(star(stack.pop()))
+            elif c == '+':
+                stack.append(plus(stack.pop()))
+            else: 
+                raise Exception("'{}' operator unrecognized".format(c))
+
+    return complete_partial(stack.pop())
+
 
 
 
@@ -157,7 +189,7 @@ def complete_partial(p):
             if k is not None:
                 alphabet.add(k)
 
-    p.tf.add({None: {}})
+    p.tf.append({None: {}})
     m = len(p.tf) - 1
     replace_exits(p.tf, m)
 
