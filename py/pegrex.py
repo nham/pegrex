@@ -52,6 +52,100 @@ class DFA:
         return self.in_accept_state()
 
 
-class WTF:
-    def __init__(self, x):
-        self.x = x
+class PartialNFA:
+    # tf is a list of dictionaries. each dict has keys as input symbols, values are lists of states
+    # entry is a state
+    def __init__(self, tf, entry):
+        for e in tf:
+            if None not in e:
+                e[None] = []
+
+        self.tf = tf
+        self.entry = entry
+
+
+# given a symbol, creates a partial NFA that accepts exactly one of those symbols
+def singleton(ch):
+    return PartialNFA([{ch: ['exit']}], 0)
+
+
+def shift_state_transition_dict(d, n):
+    for sym in d:
+        d[sym] = list(map(lambda x: x + n if x != 'exit' else x, d[sym]))
+
+def shift_transition_function(tf, n):
+    for state_td in tf:
+        shift_state_transition_dict(state_td, n)
+
+
+# takes a list of dictionaries, each of whose entries are lists. in each of the
+# lists, replace appearances of 'exit' with k
+def replace_exits(tf, k):
+    for d in tf:
+        for s in d:
+            for i in range(0, len(d[s])):
+                if d[s][i] == 'exit':
+                    d[s][i] = k
+
+
+# concatenate two partial NFAs together
+def concatenate(n1, n2):
+    m = len(n1.tf)
+    # shift the entries in the n2 transition table first by the number of states
+    # in n1. then we can just append them (in order) to n1.tf
+    shift_transition_function(n2.tf, m)
+
+    replace_exits(n1.tf, n2.entry + m)
+
+    for e in n2.tf:
+        n1.tf.append(e)
+
+    return PartialNFA(n1.tf, n1.entry)
+
+# alternates two partial NFAs together
+def alternate(n1, n2):
+    m = len(n1.tf)
+    shift_transition_function(n1.tf, 1)
+    shift_transition_function(n2.tf, m+1)
+    tf = [{None: [n1.entry + 1, n2.entry + m + 1]}]
+
+    for e in n1.tf:
+        tf.append(e)
+
+    for e in n2.tf:
+        tf.append(e)
+
+    return PartialNFA(tf, 0)
+
+
+def optional(n):
+    shift_transition_function(n.tf, 1)
+    tf = [{None: [n.entry + 1, 'exit']}]
+
+    for e in n.tf:
+        tf.append(e)
+
+    return PartialNFA(tf, 0)
+
+
+def star(n):
+    shift_transition_function(n.tf, 1)
+    tf = [{None: [n.entry + 1, 'exit']}]
+
+    replace_exits(n.tf, 0)
+
+    for e in n.tf:
+        tf.append(e)
+
+    return PartialNFA(tf, 0)
+
+
+def plus(n):
+    m = len(n.tf)
+
+    tf = n.tf.copy()
+    replace_exits(tf, m)
+    tf.append({None: [n.entry, 'exit']})
+
+    return PartialNFA(tf, n.entry)
+
