@@ -16,7 +16,7 @@ pub type Label = Option<InputSymbol>;
 type TransitionTable = HashMap<(NFAState, Label), NFAStates>;
 
 pub struct NFA {
-    state: NFAStates,
+    states: NFAStates,
     table: TransitionTable,
     initial: NFAState,
     accept: NFAStates,
@@ -24,14 +24,14 @@ pub struct NFA {
 
 impl NFA {
     fn new(table: TransitionTable, initial: NFAState, accept: NFAStates) -> NFA {
-        let mut state = HashSet::new();
-        state.insert(initial);
-        NFA { state: state, table: table, initial: initial, accept: accept }
+        let mut states = HashSet::new();
+        states.insert(initial);
+        NFA { states: states, table: table, initial: initial, accept: accept }
     }
 
     fn reset(&mut self) {
-        self.state.clear();
-        self.state.insert(self.initial);
+        self.states.clear();
+        self.states.insert(self.initial);
     }
 
     pub fn from_partial(mut pnfa: PNFA) -> NFA {
@@ -121,5 +121,56 @@ impl NFA {
             None => Err("Something went wrong"),
             Some(s) => Ok( NFA::from_partial(s) ),
         }
+    }
+
+
+    fn is_accepted(&self) -> bool {
+        for state in self.states.iter() {
+            if self.accept.contains(state) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn transition(&mut self, sym: InputSymbol) {
+        // take all unlabeled, take all labeled
+        self.take_unlabeled();
+
+        let mut added = HashSet::new();
+        for state in self.states.iter() {
+            let transitions = self.table.find(&(*state, Some(sym)));
+            if transitions.is_some() {
+                added.union( transitions.unwrap() );
+            }
+        }
+
+        self.states.union(&added);
+        println!("{}", self.states);
+
+    }
+
+    fn take_unlabeled(&mut self) {
+        let mut added = HashSet::new();
+        for state in self.states.iter() {
+            let unlabeled_transitions = self.table.find(&(*state, None));
+            if unlabeled_transitions.is_some() {
+                added.union( unlabeled_transitions.unwrap() );
+            }
+        }
+
+        self.states.union(&added);
+    }
+
+    // returns whether the string is accepted
+    pub fn run_string(&mut self, s: &String) -> bool {
+        self.reset();
+
+        for c in s.as_slice().chars() {
+            self.transition(c);
+        }
+        self.take_unlabeled();
+        self.is_accepted()
     }
 }

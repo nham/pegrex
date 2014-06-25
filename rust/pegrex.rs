@@ -5,11 +5,20 @@ mod parse;
 mod nfa;
 mod partialNFA;
 
+fn run(n: &mut NFA, s: String) {
+    println!("{}: {}", s, n.run_string(&s));
+}
 
 fn main() {
     let s = re2post("abc|d?e".to_string());
     println!("{}", s);
     if s.is_ok() {
-        let n = NFA::compile(s.unwrap());
+        let res = NFA::compile(s.unwrap());
+        if res.is_ok() {
+            let mut n = res.unwrap();
+            run(&mut n, "abc".to_string());
+            run(&mut n, "e".to_string());
+            run(&mut n, "de".to_string());
+        }
     }
 }

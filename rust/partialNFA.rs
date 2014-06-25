@@ -79,17 +79,6 @@ impl PNFA {
         PNFA { table: table, entry: entry, num_states: max }
     }
 
-    /*
-    fn transition(&self, st: NFAState, input: char) -> Result<NFAState, &str> {
-        if !self.table.contains_key(&(st, input)) {
-            Err("Either input state is invalid or symbol is not recognized")
-        } else {
-            let next = self.table.find(&(st, input)).unwrap();
-            Ok(*next)
-        }
-    }
-    */
-
     pub fn single_symbol(s: char) -> PNFA {
         let mut t = HashMap::new();
         let mut set = HashSet::new();
