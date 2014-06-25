@@ -152,8 +152,8 @@ class NFA:
     # accept_states: set of non-negative integers
     def __init__(self, alphabet, tf, init_state, accept_states):
         self.alphabet = alphabet
-        self.init_state = init_state # save it so we can reset the DFA later in case we want to
-                                     # test different strings from scratch
+        self.init_state = init_state # save it so we can reset the DFA later in case 
+                                     # we want to test different strings from scratch
         self.state = {init_state}
 
         self.accept = accept_states
@@ -172,19 +172,45 @@ class NFA:
         if inp not in self.alphabet:
             raise TypeError("Input symbol not in alphabet")
 
-        # if we're in the 'dead' state, stay there
+        # if we're in no state, we obviously can't transition anywhere
         if self.state == {}:
             return
 
-        # get a list of lists of next states
-        next_states = set(map(lambda st: self.tf[st][inp], self.state))
+        # first take all unlabeled transitions until state stops changing
+        def take_unlabeled(state):
+            return self.tf[state][None]
+
+        states = self.state
+        new_states = states.union(*list(map(take_unlabeled, self.state)))
+
+        while new_states != states:
+            states = new_states
+            new_states = states.union(*list(map(take_unlabeled, self.state)))
+
+
+        # get a list of sets of next states
+        def apply_input(state):
+            state_dict = self.tf[state]
+
+            unlabeled = state_dict[None]
+
+            if inp in state_dict:
+                return state_dict[inp].union(unlabeled)
+            else:
+                return unlabeled
+
+        next_states = list(map(apply_input, new_states))
 
         self.state = set().union(*next_states)
+        print('now state = {}'.format(self.state))
 
 
     def in_accept_state(self):
-        return self.state in self.accept
+        for state in self.state:
+            if state in self.accept:
+                return True
 
+        return False
 
     # read a string after resetting the DFA to its initial state
     def read(self, string):
@@ -199,3 +225,8 @@ class NFA:
 if __name__ == '__main__':
     n = compile_NFA(re2post("abc|d?e"))
     print("compiled 'abc|d?e'")
+
+    run = lambda x: print("Run it on '{}': accept = {}".format(x, n.read(x)))
+    run('abc')
+    run('e')
+    run('d')
