@@ -142,7 +142,7 @@ impl NFA {
         for state in self.states.iter() {
             let transitions = self.table.find(&(*state, Some(sym)));
             if transitions.is_some() {
-                added.union( transitions.unwrap() );
+                added = added.union( transitions.unwrap() ).map(|x| *x).collect();
             }
         }
 
@@ -156,7 +156,7 @@ impl NFA {
         for state in self.states.iter() {
             let unlabeled_transitions = self.table.find(&(*state, None));
             if unlabeled_transitions.is_some() {
-                added.union( unlabeled_transitions.unwrap() );
+                added = added.union( unlabeled_transitions.unwrap() ).map(|x| *x).collect();
             }
         }
 

@@ -16,7 +16,7 @@ fn apply_all(sstack: &mut Vec<String>, cstack: &mut Vec<char>) {
 
 
 pub fn is_op(c: char) -> bool {
-    c == '+' || c == '|' || c == '?' || c == '*' || c == '+'
+    c == '.' || c == '|' || c == '?' || c == '*' || c == '+'
 }
 
 pub fn re2post(s: String) -> Result<String, &str> {
@@ -48,21 +48,18 @@ pub fn re2post(s: String) -> Result<String, &str> {
             // We assume that we cannot see '.' here
             if c != '|' {
                 match operand_stack.pop() {
-                    Some(mut operand) => 
-                        { 
-                            operand.push_char(c); 
-                            operand_stack.push(operand);
-                        },
+                    Some(mut operand) => { 
+                        operand.push_char(c); 
+                        operand_stack.push(operand);
+                    },
 
-                    None => 
-                        { 
-                            return Err("Input expression is malformed");
-                        }
+                    None => { 
+                        return Err("Input expression is malformed");
+                    }
                 }
             } else {
                 apply_all(&mut operand_stack, &mut operator_stack);
                 operator_stack.push(c);
-                
             }
         }
     }
