@@ -176,33 +176,33 @@ class NFA:
         if self.state == {}:
             return
 
-        # first take all unlabeled transitions until state stops changing
-        def take_unlabeled(state):
-            return self.tf[state][None]
+        def add_from_unlabeled(states):
+            # first take all unlabeled transitions until state stops changing
+            def take_unlabeled(state):
+                return self.tf[state][None]
 
-        states = self.state
-        new_states = states.union(*list(map(take_unlabeled, self.state)))
+            new_states = states.union(*list(map(take_unlabeled, states)))
 
-        while new_states != states:
-            states = new_states
-            new_states = states.union(*list(map(take_unlabeled, self.state)))
+            while new_states != states:
+                states = new_states
+                new_states = states.union(*list(map(take_unlabeled, states)))
+
+            return new_states
 
 
         # get a list of sets of next states
         def apply_input(state):
             state_dict = self.tf[state]
 
-            unlabeled = state_dict[None]
-
             if inp in state_dict:
-                return state_dict[inp].union(unlabeled)
+                return state_dict[inp]
             else:
-                return unlabeled
+                return {}
 
+
+        new_states = add_from_unlabeled(self.state)
         next_states = list(map(apply_input, new_states))
-
         self.state = set().union(*next_states)
-        print('now state = {}'.format(self.state))
 
 
     def in_accept_state(self):
@@ -229,4 +229,4 @@ if __name__ == '__main__':
     run = lambda x: print("Run it on '{}': accept = {}".format(x, n.read(x)))
     run('abc')
     run('e')
-    run('d')
+    run('de')
