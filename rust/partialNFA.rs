@@ -1,20 +1,15 @@
 use std::collections::hashmap::HashMap;
 use std::collections::hashmap::HashSet;
-
-type NFAState = uint;
-type InputSymbol = char;
+use super::nfa::{NFAState, Label};
 
 #[deriving(PartialEq, Eq, Clone, Hash)]
-enum PartialNFATarget {
+pub enum PNFATarget {
     State(NFAState),
     Exit,
 }
 
-type Label = Option<InputSymbol>;
-type PNFATargetSet = HashSet<PartialNFATarget>;
+type PNFATargetSet = HashSet<PNFATarget>;
 
-// For NFA's, some transitions are unlabeled, which we represent by None (hence
-// the optional InputSymbol)
 type TransitionTable = HashMap<(NFAState, Label), PNFATargetSet>;
 
 // By convention a Partial NFA with n states uses the first n natural numbers
@@ -64,14 +59,14 @@ fn add_table(table1: &mut TransitionTable, table2: TransitionTable) {
 }
 
 #[deriving(PartialEq, Eq, Clone)]
-struct PartialNFA {
-    table: TransitionTable,
-    entry: NFAState,
-    num_states: uint,
+pub struct PNFA {
+    pub table: TransitionTable,
+    pub entry: NFAState,
+    pub num_states: uint,
 }
 
-impl PartialNFA {
-    fn new(table: TransitionTable, entry: NFAState) -> PartialNFA {
+impl PNFA {
+    fn new(table: TransitionTable, entry: NFAState) -> PNFA {
         let mut max: NFAState = 0u;
 
         for &(state, _) in table.keys() {
@@ -81,7 +76,7 @@ impl PartialNFA {
 
         }
 
-        PartialNFA { table: table, entry: entry, num_states: max }
+        PNFA { table: table, entry: entry, num_states: max }
     }
 
     /*
@@ -95,26 +90,26 @@ impl PartialNFA {
     }
     */
 
-    fn single_symbol(s: char) -> PartialNFA {
+    pub fn single_symbol(s: char) -> PNFA {
         let mut t = HashMap::new();
         let mut set = HashSet::new();
         set.insert(Exit);
         t.insert((0u, Some(s)), set);
-        PartialNFA::new(t, 0u)
+        PNFA::new(t, 0u)
     }
 
-    fn concatenate(n1: &PartialNFA, n2: &PartialNFA) -> PartialNFA {
-        let mut c: PartialNFA = (*n1).clone();
+    pub fn concatenate(mut n1: PNFA, n2: PNFA) -> PNFA {
         let m = n1.num_states;
         let new_n2_table = create_shifted_table(&(n2.table), m);
-        redirect_exit_targets(&mut(c.table), n2.entry + m);
+        redirect_exit_targets(&mut(n1.table), n2.entry + m);
 
-        add_table(&mut c.table, new_n2_table);
+        add_table(&mut n1.table, new_n2_table);
+        n1.num_states += n2.num_states;
 
-        c
+        n1
     }
 
-    fn alternate(n1: &PartialNFA, n2: &PartialNFA) -> PartialNFA {
+    pub fn alternate(n1: PNFA, n2: PNFA) -> PNFA {
         let mut table: TransitionTable = HashMap::new();
         let m = n1.num_states;
 
@@ -127,6 +122,22 @@ impl PartialNFA {
 
         table.insert((0u, None), set);
 
-        PartialNFA::new(table, 0u)
+        PNFA::new(table, 0u)
+    }
+
+
+    pub fn optional(n: PNFA) -> PNFA {
+        let mut table: TransitionTable = HashMap::new();
+        add_table(&mut table, create_shifted_table(&(n.table), 1u));
+
+        let mut set = HashSet::new();
+        set.insert(State(n.entry + 1u));
+        set.insert(Exit);
+
+        table.insert((0u, None), set);
+
+        PNFA::new(table, 0u)
     }
 }
+
+
