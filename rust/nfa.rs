@@ -65,45 +65,56 @@ impl NFA {
         let mut stack: Vec<PNFA> = vec!();
 
         for c in s.as_slice().chars() {
-            if is_op(c) {
-                if c == '.' {
-                    let pop1 = stack.pop();
-                    let pop2 = stack.pop();
-
-                    if pop1.is_none() || pop2.is_none() {
-                        return Err("Insufficient number of arguments for '.'");
-                    }
-
-                    stack.push(PNFA::concatenate(pop2.unwrap(), pop1.unwrap()));
-
-                } else if c == '|' {
-                    let pop1 = stack.pop();
-                    let pop2 = stack.pop();
-
-                    if pop1.is_none() || pop2.is_none() {
-                        return Err("Insufficient number of arguments for '|'");
-                    }
-
-                    stack.push(PNFA::alternate(pop2.unwrap(), pop1.unwrap()));
-
-                } else if c == '?' {
-                    let pop = stack.pop();
-
-                    if pop.is_none() {
-                        return Err("Insufficient number of arguments for '?'");
-                    }
-
-                    stack.push(PNFA::optional(pop.unwrap()));
-
-                } else if c == '*' {
-                } else if c == '+' {
-
-                } 
-
-            } else {
+            if !is_op(c) {
                 stack.push(PNFA::single_symbol(c));
-            }
 
+            } else if c == '.' {
+                let pop1 = stack.pop();
+                let pop2 = stack.pop();
+
+                if pop1.is_none() || pop2.is_none() {
+                    return Err("Insufficient number of arguments for '.'");
+                }
+
+                stack.push(PNFA::concatenate(pop2.unwrap(), pop1.unwrap()));
+
+            } else if c == '|' {
+                let pop1 = stack.pop();
+                let pop2 = stack.pop();
+
+                if pop1.is_none() || pop2.is_none() {
+                    return Err("Insufficient number of arguments for '|'");
+                }
+
+                stack.push(PNFA::alternate(pop2.unwrap(), pop1.unwrap()));
+
+            } else if c == '?' {
+                let pop = stack.pop();
+
+                if pop.is_none() {
+                    return Err("Insufficient number of arguments for '?'");
+                }
+
+                stack.push(PNFA::optional(pop.unwrap()));
+
+            } else if c == '*' {
+                let pop = stack.pop();
+
+                if pop.is_none() {
+                    return Err("Insufficient number of arguments for '?'");
+                }
+
+                stack.push(PNFA::star(pop.unwrap()));
+            } else if c == '+' {
+                let pop = stack.pop();
+
+                if pop.is_none() {
+                    return Err("Insufficient number of arguments for '?'");
+                }
+
+                stack.push(PNFA::plus(pop.unwrap()));
+
+            } 
         }
 
         match stack.pop() {

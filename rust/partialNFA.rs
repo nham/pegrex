@@ -138,6 +138,34 @@ impl PNFA {
 
         PNFA::new(table, 0u)
     }
+
+
+    pub fn star(n: PNFA) -> PNFA {
+        let mut table: TransitionTable = HashMap::new();
+        add_table(&mut table, create_shifted_table(&(n.table), 1u));
+
+        redirect_exit_targets(&mut table, 0u);
+
+        let mut set = HashSet::new();
+        set.insert(State(n.entry + 1u));
+        set.insert(Exit);
+
+        table.insert((0u, None), set);
+
+        PNFA::new(table, 0u)
+    }
+
+
+    pub fn plus(mut n: PNFA) -> PNFA {
+        let m = n.num_states;
+        redirect_exit_targets(&mut n.table, m);
+
+        let mut set = HashSet::new();
+        set.insert(State(n.entry));
+        set.insert(Exit);
+
+        n.table.insert((m, None), set);
+
+        n
+    }
 }
-
-
