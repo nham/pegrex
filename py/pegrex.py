@@ -58,7 +58,7 @@ def compile_NFA(s):
 
     for c in s:
         if c not in ops():
-            stack.append(singleton(c))
+            stack.append(single_symbol(c))
         else:
             if c == '|':
                 pop2 = stack.pop()
@@ -95,7 +95,7 @@ class PartialNFA:
 
 
 # given a symbol, creates a partial NFA that accepts exactly one of those symbols
-def singleton(ch):
+def single_symbol(ch):
     return PartialNFA([{ch: {'exit'}}], 0)
 
 
