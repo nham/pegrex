@@ -14,11 +14,12 @@ fn apply_all(sstack: &mut Vec<String>, cstack: &mut Vec<char>) {
     }
 }
 
-pub fn re2post(s: String) -> Result<String, String> {
-    fn is_op(c: char) -> bool {
-        c == '+' || c == '|' || c == '?' || c == '*' || c == '+'
-    }
 
+pub fn is_op(c: char) -> bool {
+    c == '+' || c == '|' || c == '?' || c == '*' || c == '+'
+}
+
+pub fn re2post(s: String) -> Result<String, &str> {
     let mut operator_stack: Vec<char> = vec!();
     let mut operand_stack: Vec<String> = vec!();
 
@@ -30,7 +31,6 @@ pub fn re2post(s: String) -> Result<String, String> {
 
             // check if we should insert concat op first
             if operand_stack.len() - operator_stack.len() > 0 {
-                println!("inserting '.'");
                 while {
                     let size = operator_stack.len();
                     size > 0 && *operator_stack.get(size - 1) != '|'
@@ -56,7 +56,7 @@ pub fn re2post(s: String) -> Result<String, String> {
 
                     None => 
                         { 
-                            return Err("Input expression is malformed".to_string());
+                            return Err("Input expression is malformed");
                         }
                 }
             } else {
