@@ -19,14 +19,11 @@ pub fn is_op(c: char) -> bool {
     c == '.' || c == '|' || c == '?' || c == '*' || c == '+'
 }
 
-pub fn re2post(s: String) -> Result<String, &str> {
+pub fn re2post(s: &String) -> Result<String, &str> {
     let mut operator_stack: Vec<char> = vec!();
     let mut operand_stack: Vec<String> = vec!();
 
     for c in s.as_slice().chars() {
-        println!("operator_stack: {}", operator_stack);
-        println!("operand_stack: {}", operand_stack);
-        println!("--------------------");
         if !is_op(c) {
 
             // check if we should insert concat op first

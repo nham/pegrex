@@ -1,3 +1,5 @@
+use std::os;
+
 use parse::re2post;
 use nfa::NFA;
 
@@ -10,7 +12,13 @@ fn run(n: &mut NFA, s: String) {
 }
 
 fn main() {
-    let s = re2post("abc|d?e".to_string());
+    let args = os::args();
+    if args.len() != 2 {
+        println!("Usage: pegrex <regex>");
+        return;
+    }
+
+    let s = re2post(args.get(1));
     println!("{}", s);
     if s.is_ok() {
         let res = NFA::compile(s.unwrap());
