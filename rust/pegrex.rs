@@ -16,6 +16,7 @@ fn main() {
         let res = NFA::compile(s.unwrap());
         if res.is_ok() {
             let mut n = res.unwrap();
+            println!("n = {}", n);
             run(&mut n, "abc".to_string());
             run(&mut n, "e".to_string());
             run(&mut n, "de".to_string());

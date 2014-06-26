@@ -15,6 +15,7 @@ pub type Label = Option<InputSymbol>;
 
 type TransitionTable = HashMap<(NFAState, Label), NFAStates>;
 
+#[deriving(Show)]
 pub struct NFA {
     states: NFAStates,
     table: TransitionTable,
@@ -136,7 +137,7 @@ impl NFA {
 
     fn transition(&mut self, sym: InputSymbol) {
         // take all unlabeled, take all labeled
-        self.take_unlabeled();
+        self.take_all_unlabeled();
 
         let mut added = HashSet::new();
         for state in self.states.iter() {
@@ -146,8 +147,7 @@ impl NFA {
             }
         }
 
-        self.states.union(&added);
-        println!("{}", self.states);
+        self.states = self.states.union(&added).map(|x| *x).collect();
 
     }
 
@@ -160,7 +160,18 @@ impl NFA {
             }
         }
 
-        self.states.union(&added);
+        self.states = self.states.union(&added).map(|x| *x).collect();
+    }
+
+    fn take_all_unlabeled(&mut self) {
+        let mut old = self.states.clone();
+        self.take_unlabeled();
+
+        while self.states != old {
+            old = self.states.clone();
+            self.take_unlabeled();
+        }
+
     }
 
     // returns whether the string is accepted
@@ -170,7 +181,7 @@ impl NFA {
         for c in s.as_slice().chars() {
             self.transition(c);
         }
-        self.take_unlabeled();
+        self.take_all_unlabeled();
         self.is_accepted()
     }
 }

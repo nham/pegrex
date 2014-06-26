@@ -1,8 +1,7 @@
-use std::collections::hashmap::HashMap;
-use std::collections::hashmap::HashSet;
+use std::collections::hashmap::{HashMap, HashSet};
 use super::nfa::{NFAState, Label};
 
-#[deriving(PartialEq, Eq, Clone, Hash)]
+#[deriving(PartialEq, Eq, Clone, Hash, Show)]
 pub enum PNFATarget {
     State(NFAState),
     Exit,
@@ -58,7 +57,7 @@ fn add_table(table1: &mut TransitionTable, table2: TransitionTable) {
     }
 }
 
-#[deriving(PartialEq, Eq, Clone)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub struct PNFA {
     pub table: TransitionTable,
     pub entry: NFAState,
@@ -76,7 +75,7 @@ impl PNFA {
 
         }
 
-        PNFA { table: table, entry: entry, num_states: max }
+        PNFA { table: table, entry: entry, num_states: max + 1u }
     }
 
     pub fn single_symbol(s: char) -> PNFA {
@@ -93,6 +92,7 @@ impl PNFA {
         redirect_exit_targets(&mut(n1.table), n2.entry + m);
 
         add_table(&mut n1.table, new_n2_table);
+
         n1.num_states += n2.num_states;
 
         n1
@@ -157,4 +157,39 @@ impl PNFA {
 
         n
     }
+}
+
+
+mod test {
+    use std::collections::hashmap::{HashMap, HashSet};
+    use super::{TransitionTable, PNFATarget, State, Exit, create_shifted_table};
+
+    #[test]
+    fn test_create_shifted_table() {
+        fn singleton(t: PNFATarget) -> HashSet<PNFATarget> {
+            let mut set = HashSet::new();
+            set.insert(t);
+            set
+        }
+
+        let mut tt: TransitionTable = HashMap::new();
+        tt.insert( (0u, Some('a')), singleton(State(1u)) );
+        tt.insert( (0u, None), singleton(State(3u)) );
+        tt.insert( (1u, Some('b')), singleton(State(2u)) );
+        tt.insert( (1u, Some('c')), singleton(State(3u)) );
+        tt.insert( (2u, None), singleton(Exit) );
+        tt.insert( (3u, None), singleton(Exit) );
+
+        let shifted = create_shifted_table(&tt, 5u);
+
+        assert!( *(shifted.find(&(5u, Some('a'))).unwrap()) == singleton(State(6u)) );
+        assert!( *(shifted.find(&(5u, None)).unwrap()) == singleton(State(8u)) );
+        assert!( *(shifted.find(&(6u, Some('b'))).unwrap()) == singleton(State(7u)) );
+        assert!( *(shifted.find(&(6u, Some('c'))).unwrap()) == singleton(State(8u)) );
+        assert!( *(shifted.find(&(7u, None)).unwrap()) == singleton(Exit) );
+        assert!( *(shifted.find(&(8u, None)).unwrap()) == singleton(Exit) );
+
+    }
+
+
 }
