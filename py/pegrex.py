@@ -1,4 +1,5 @@
 from parse import ops, re2post
+import sys
 
 # from a postfix regular expression, compile an NFA
 # maintains a stack of PartialNFAs
@@ -223,8 +224,12 @@ class NFA:
 
 
 if __name__ == '__main__':
-    n = compile_NFA(re2post("abc|d?e"))
-    print("compiled 'abc|d?e'")
+    if len(sys.argv) != 2:
+        print("Usage: pegrex <regex>")
+        sys.exit(1)
+
+    n = compile_NFA(re2post(sys.argv[1]))
+    print("compiled '{}'".format(sys.argv[1])
 
     run = lambda x: print("Run it on '{}': accept = {}".format(x, n.read(x)))
     run('abc')
